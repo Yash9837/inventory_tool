@@ -159,6 +159,7 @@ export default function UpdatesPage() {
           <Table>
             <TableHeader>
               <TableRow className="hover:bg-transparent">
+                <TableHead className="font-semibold">Date</TableHead>
                 <TableHead className="font-semibold">Time</TableHead>
                 <TableHead className="font-semibold">SKU</TableHead>
                 <TableHead className="font-semibold">Field</TableHead>
@@ -170,7 +171,7 @@ export default function UpdatesPage() {
               {paginated.length === 0 ? (
                 <TableRow>
                   <TableCell
-                    colSpan={5}
+                    colSpan={6}
                     className="h-32 text-center text-muted-foreground"
                   >
                     <div className="flex flex-col items-center gap-2">
@@ -184,15 +185,20 @@ export default function UpdatesPage() {
                   <TableRow key={update.id} className="group">
                     <TableCell>
                       <div>
-                        <p className="text-xs font-medium">
+                        <p className="text-sm font-medium">
+                          {format(new Date(update.created_at), "dd MMM yyyy")}
+                        </p>
+                        <p className="text-[11px] text-muted-foreground">
                           {formatDistanceToNow(new Date(update.created_at), {
                             addSuffix: true,
                           })}
                         </p>
-                        <p className="text-[10px] text-muted-foreground">
-                          {format(new Date(update.created_at), "MMM d, yyyy HH:mm")}
-                        </p>
                       </div>
+                    </TableCell>
+                    <TableCell>
+                      <span className="text-sm font-mono font-medium">
+                        {format(new Date(update.created_at), "hh:mm:ss a")}
+                      </span>
                     </TableCell>
                     <TableCell>
                       <span className="font-bold text-primary">
