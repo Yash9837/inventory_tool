@@ -27,12 +27,28 @@ CREATE TABLE IF NOT EXISTS public.updates (
   created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
--- 3. Profiles table (optional)
+-- 3. Profiles table (with role-based access)
 CREATE TABLE IF NOT EXISTS public.profiles (
   id UUID PRIMARY KEY REFERENCES auth.users(id),
   full_name TEXT,
-  avatar_url TEXT
+  avatar_url TEXT,
+  role TEXT NOT NULL DEFAULT 'user' CHECK (role IN ('admin', 'user'))
 );
+
+-- Auto-create profile on user signup
+CREATE OR REPLACE FUNCTION public.handle_new_user()
+RETURNS TRIGGER AS $$
+BEGIN
+  INSERT INTO public.profiles (id, full_name, role)
+  VALUES (NEW.id, NEW.raw_user_meta_data->>'full_name', 'user');
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+CREATE TRIGGER on_auth_user_created
+  AFTER INSERT ON auth.users
+  FOR EACH ROW
+  EXECUTE FUNCTION public.handle_new_user();
 
 -- 4. Updated_at trigger for skus
 CREATE OR REPLACE FUNCTION update_updated_at_column()
@@ -70,10 +86,15 @@ CREATE POLICY "Authenticated users can update SKUs"
   USING (true)
   WITH CHECK (true);
 
-CREATE POLICY "Authenticated users can view updates"
+CREATE POLICY "Admins can view updates"
   ON public.updates FOR SELECT
   TO authenticated
-  USING (true);
+  USING (
+    EXISTS (
+      SELECT 1 FROM public.profiles
+      WHERE profiles.id = auth.uid() AND profiles.role = 'admin'
+    )
+  );
 
 CREATE POLICY "Authenticated users can insert updates"
   ON public.updates FOR INSERT

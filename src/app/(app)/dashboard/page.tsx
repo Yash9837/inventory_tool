@@ -24,6 +24,7 @@ import { formatDistanceToNow } from "date-fns";
 import type { UpdateLog, MarketplaceField } from "@/types/database";
 import { MARKETPLACE_COLORS, MARKETPLACES } from "@/types/database";
 import { cn } from "@/lib/utils";
+import { useRole } from "@/components/providers/role-provider";
 
 interface DashboardStats {
   totalSkus: number;
@@ -37,6 +38,7 @@ export default function DashboardPage() {
   const [recentUpdates, setRecentUpdates] = useState<UpdateLog[]>([]);
   const [loading, setLoading] = useState(true);
   const supabase = createClient();
+  const { isAdmin } = useRole();
 
   const fetchData = useCallback(async () => {
     // Fetch all SKUs for stats
@@ -67,16 +69,18 @@ export default function DashboardPage() {
       setStats({ totalSkus, totalStock, lowStockCount, marketplaceCounts });
     }
 
-    // Fetch recent updates
-    const { data: updates } = await supabase
-      .from("updates")
-      .select("*")
-      .order("created_at", { ascending: false })
-      .limit(15);
+    // Fetch recent updates (admin only)
+    if (isAdmin) {
+      const { data: updates } = await supabase
+        .from("updates")
+        .select("*")
+        .order("created_at", { ascending: false })
+        .limit(15);
 
-    if (updates) setRecentUpdates(updates);
+      if (updates) setRecentUpdates(updates);
+    }
     setLoading(false);
-  }, [supabase]);
+  }, [supabase, isAdmin]);
 
   useEffect(() => {
     fetchData();
@@ -215,7 +219,8 @@ export default function DashboardPage() {
         ))}
       </div>
 
-      {/* Recent Activity */}
+      {/* Recent Activity (Admin Only) */}
+      {isAdmin && (
       <Card className="border-border/50">
         <CardHeader>
           <div className="flex items-center justify-between">
@@ -299,6 +304,7 @@ export default function DashboardPage() {
           )}
         </CardContent>
       </Card>
+      )}
     </div>
   );
 }

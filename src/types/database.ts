@@ -20,10 +20,13 @@ export interface UpdateLog {
   created_at: string;
 }
 
+export type UserRole = "admin" | "user";
+
 export interface Profile {
   id: string;
   full_name: string | null;
   avatar_url: string | null;
+  role: UserRole;
 }
 
 export type MarketplaceField = "amazon" | "flipkart" | "meesho" | "myntra";

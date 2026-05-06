@@ -15,6 +15,17 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
+    // Check admin role
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("role")
+      .eq("id", user.id)
+      .single();
+
+    if (profile?.role !== "admin") {
+      return NextResponse.json({ error: "Admin access required" }, { status: 403 });
+    }
+
     const formData = await request.formData();
     const file = formData.get("file") as File;
 

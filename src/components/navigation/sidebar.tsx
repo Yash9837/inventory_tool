@@ -20,27 +20,32 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { Separator } from "@/components/ui/separator";
+import { useRole } from "@/components/providers/role-provider";
 
 const navItems = [
   {
     title: "Dashboard",
     href: "/dashboard",
     icon: LayoutDashboard,
+    adminOnly: false,
   },
   {
     title: "SKU Inventory",
     href: "/skus",
     icon: Package,
+    adminOnly: false,
   },
   {
     title: "Audit Logs",
     href: "/updates",
     icon: History,
+    adminOnly: true,
   },
   {
     title: "Import Data",
     href: "/import",
     icon: Upload,
+    adminOnly: true,
   },
 ];
 
@@ -54,6 +59,11 @@ function NavContent({
   const pathname = usePathname();
   const router = useRouter();
   const supabase = createClient();
+  const { isAdmin } = useRole();
+
+  const visibleNavItems = navItems.filter(
+    (item) => !item.adminOnly || isAdmin
+  );
 
   const handleSignOut = async () => {
     await supabase.auth.signOut();
@@ -79,7 +89,7 @@ function NavContent({
 
       {/* Nav Items */}
       <nav className="flex-1 space-y-1 px-3">
-        {navItems.map((item) => {
+        {visibleNavItems.map((item) => {
           const isActive = pathname === item.href;
           return (
             <Link
